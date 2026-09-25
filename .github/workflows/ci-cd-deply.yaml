@@ -1,11 +1,11 @@
-name: 01 - Build and Push Docker Image to ECR
+name: 02 - Build image, push, and deploy to EC2
 
 on:
-#  push:
-#    branches:
-#      - main
+    push:
+      branches:
+        - main
 
-  workflow_dispatch:
+    workflow_dispatch:
 
 permissions:
   id-token: write
@@ -20,7 +20,6 @@ jobs:
   build-and-push:
 
     name: Build Docker Image and Push to Amazon ECR
-
     runs-on: ubuntu-latest
 
     steps:
@@ -51,3 +50,9 @@ jobs:
             $ECR_REGISTRY/$ECR_REPOSITORY:latest
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to EC2
+        uses: f
