@@ -1,5 +1,143 @@
-<h2>Test Spring boot application</h2>
-<form method="POST" action="/greeting">
-    <input name="fullName" type="text" placeholder="Full name"/>
-    <input type="submit" value="Submit"/>
-</form>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Spring Boot App</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-family: Arial, sans-serif;
+            background: #f5f7fb;
+            color: #1f2937;
+        }
+
+        .card {
+            width: 90%;
+            max-width: 420px;
+            padding: 45px 35px;
+
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+        }
+
+        .icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 24px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            background: #eef2ff;
+            border-radius: 50%;
+            font-size: 30px;
+        }
+
+        h2 {
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 28px;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            margin-bottom: 30px;
+            text-align: center;
+            color: #6b7280;
+            font-size: 15px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 13px 15px;
+
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            outline: none;
+
+            font-size: 15px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input[type="text"]:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        input[type="submit"] {
+            padding: 13px;
+
+            border: none;
+            border-radius: 10px;
+
+            background: #4f46e5;
+            color: white;
+
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        input[type="submit"]:hover {
+            background: #4338ca;
+        }
+
+        input[type="submit"]:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="card">
+
+    <div class="icon">👋</div>
+
+    <h2>Test Spring Boot Application</h2>
+
+    <p class="subtitle">
+        Enter your name to receive a personalized greeting.
+    </p>
+
+    <form method="POST" action="/greeting">
+        <input
+                name="fullName"
+                type="text"
+                placeholder="Full name"
+                required
+        />
+
+        <input
+                type="submit"
+                value="Say Hello"
+        />
+    </form>
+
+</div>
+
+</body>
+</html>
