@@ -79,7 +79,7 @@ jobs:
   cd:
     name: "CD - Deploy to Amazon EKS"
     runs-on: ubuntu-latest
-    needs: ci
+#    needs: ci
 
     steps:
       - name: Checkout source code
