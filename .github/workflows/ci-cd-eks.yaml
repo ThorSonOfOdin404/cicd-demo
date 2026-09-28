@@ -153,12 +153,12 @@ jobs:
             -n "$K8S_NAMESPACE"
 
           echo "----- SERVICE -----"
-          kubectl get service cicd-demo-service \
+          kubectl get service testbook-service \
             -n "$K8S_NAMESPACE"
 
       - name: Print application URL when available
         run: |
-          HOSTNAME=$(kubectl get service cicd-demo-service \
+          HOSTNAME=$(kubectl get service testbook-service \
             -n "$K8S_NAMESPACE" \
             -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' || true)
 
@@ -166,5 +166,5 @@ jobs:
             echo "Application URL: http://$HOSTNAME"
           else
             echo "AWS Load Balancer address is not available yet."
-            echo "Run: kubectl get service cicd-demo-service"
+            echo "Run: kubectl get service testbook-service"
           fi
