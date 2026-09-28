@@ -20,66 +20,66 @@ env:
   K8S_CONTAINER: cicd-demo
 
 jobs:
-#  ci:
-#    name: "CI - Test, Build and Push Image"
-#    runs-on: ubuntu-latest
-#
-#    outputs:
-#      image_uri: ${{ steps.image.outputs.image_uri }}
-#
-#    steps:
-#      - name: Checkout source code
-#        uses: actions/checkout@v4
-#
-#      - name: Set up Java 21
-#        uses: actions/setup-java@v4
-#        with:
-#          distribution: temurin
-#          java-version: "21"
-#          cache: maven
-#
-#      - name: Run tests and build application
-#        run: mvn --batch-mode clean verify
-#
-#      - name: Configure AWS credentials using GitHub OIDC
-#        uses: aws-actions/configure-aws-credentials@v6.3.0
-#        with:
-#          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/GithubActionECRAccess
-#          aws-region: ${{ env.AWS_REGION }}
-#
-#      - name: Login to Amazon ECR
-#        id: login-ecr
-#        uses: aws-actions/amazon-ecr-login@v2
-#
-#      - name: Build and push Docker image
-#        id: image
-#        env:
-#          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-#          IMAGE_TAG: ${{ github.sha }}
-#        run: |
-#          set -euo pipefail
-#
-#          IMAGE_URI="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
-#          LATEST_URI="$ECR_REGISTRY/$ECR_REPOSITORY:latest"
-#
-#          echo "Building $IMAGE_URI"
-#          docker build \
-#            -t "$IMAGE_URI" \
-#            -t "$LATEST_URI" \
-#            .
-#
-#          echo "Pushing immutable commit image..."
-#          docker push "$IMAGE_URI"
-#
-#          echo "Pushing latest image..."
-#          docker push "$LATEST_URI"
-#
-#          echo "image_uri=$IMAGE_URI" >> "$GITHUB_OUTPUT"
+  ci:
+    name: "CI - Test, Build and Push Image"
+    runs-on: ubuntu-latest
+
+    outputs:
+      image_uri: ${{ steps.image.outputs.image_uri }}
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Run tests and build application
+        run: mvn --batch-mode clean verify
+
+      - name: Configure AWS credentials using GitHub OIDC
+        uses: aws-actions/configure-aws-credentials@v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/GithubActionECRAccess
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image
+        id: image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          IMAGE_URI="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          LATEST_URI="$ECR_REGISTRY/$ECR_REPOSITORY:latest"
+
+          echo "Building $IMAGE_URI"
+          docker build \
+            -t "$IMAGE_URI" \
+            -t "$LATEST_URI" \
+            .
+
+          echo "Pushing immutable commit image..."
+          docker push "$IMAGE_URI"
+
+          echo "Pushing latest image..."
+          docker push "$LATEST_URI"
+
+          echo "image_uri=$IMAGE_URI" >> "$GITHUB_OUTPUT"
 
   cd:
     name: "CD - Deploy to Amazon EKS"
     runs-on: ubuntu-latest
-#    needs: ci
+    needs: ci
 
     steps:
       - name: Checkout source code
