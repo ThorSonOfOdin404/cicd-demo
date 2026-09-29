@@ -153,12 +153,12 @@ jobs:
             -n "$K8S_NAMESPACE"
 
           echo "----- SERVICE -----"
-          kubectl get service testbook-service \
+          kubectl get service cicd-demo-service \
             -n "$K8S_NAMESPACE"
 
       - name: Print application URL when available
         run: |
-          HOSTNAME=$(kubectl get service testbook-service \
+          HOSTNAME=$(kubectl get service cicd-demo-service \
             -n "$K8S_NAMESPACE" \
             -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' || true)
 
