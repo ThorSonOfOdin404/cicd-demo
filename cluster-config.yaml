@@ -1,0 +1,15 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: cicd-repo-cluster
+  region: ap-south-1
+  version: "1.36"
+
+managedNodeGroups:
+  - name: cicd-repo-nodes
+    instanceType: t3a.medium
+    desiredCapacity: 2
+    minSize: 2
+    maxSize: 2
+

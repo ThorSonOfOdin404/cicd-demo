@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: cicd-demo
+  labels:
+    app: cicd-demo
+    environment: {{ .Values.environment }}
+
+spec:
+
+  # Number of Pods to run.
+  #
+  # DEV  -> 1
+  # TEST -> 2
+  # PROD -> 3
+  replicas: {{ .Values.replicaCount }}
+
+  selector:
+    matchLabels:
+      app: cicd-demo
+
+  template:
+    metadata:
+      labels:
+        app: cicd-demo
+        environment: {{ .Values.environment }}
+    spec:
+      containers:
+        - name: cicd-demo
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.container.port }}
+              protocol: TCP

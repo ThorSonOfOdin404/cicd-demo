@@ -1,0 +1,20 @@
+# Number of Testbook API Pods we want Kubernetes to run
+replicaCount: 2
+
+# Docker image information
+image:
+  repository: 711457211649.dkr.ecr.ap-south-1.amazonaws.com/attripratham/cicd-demo
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+# Port on which the Spring Boot application runs
+container:
+  port: 8090
+
+# Kubernetes Service configuration
+service:
+  type: LoadBalancer
+  # External service port
+  port: 80
+  # Traffic will be forwarded to Spring Boot on port 8080
+  targetPort: 8090

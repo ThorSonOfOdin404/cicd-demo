@@ -1,0 +1,10 @@
+# PROD environment
+replicaCount: 3
+
+environment: prod
+
+image:
+  tag: "prod"
+
+service:
+  type: LoadBalancer

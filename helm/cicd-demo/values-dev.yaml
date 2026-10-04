@@ -1,0 +1,10 @@
+# DEV environment
+replicaCount: 1
+
+environment: dev
+
+image:
+  tag: "latest"
+
+service:
+  type: LoadBalancer
