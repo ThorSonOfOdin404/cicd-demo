@@ -1,9 +1,9 @@
 name: 04 - Deployment to EKS cluster using Helm
 
 on:
-  push:
-    branches:
-      - main
+#  push:
+#    branches:
+#      - main
   workflow_dispatch:
 
 permissions:
@@ -163,7 +163,7 @@ jobs:
       #   If the upgrade fails, Helm automatically rolls back
       #   the failed upgrade.
       # --------------------------------------------------------
-      - name: Deploy Testbook API with Helm
+      - name: Deploy CICD Demo API with Helm
         run: |
           helm upgrade --install "$HELM_RELEASE_NAME" "$HELM_CHART_PATH" \
             --namespace "$K8S_NAMESPACE" \
@@ -204,6 +204,6 @@ jobs:
       - name: Verify application rollout
         run: |
           kubectl rollout status \
-            deployment/testbook-api \
+            deployment/cicd-demo \
             --namespace "$K8S_NAMESPACE" \
             --timeout=180s

@@ -1,0 +1,288 @@
+name: CICD Demo - CI with Argo CD
+
+# ============================================================
+# WHEN SHOULD THIS WORKFLOW RUN?
+# ============================================================
+# 1. Automatically whenever source code is pushed to main.
+# 2. Manually from the GitHub Actions screen.
+#
+# IMPORTANT:
+# The workflow itself updates values-dev.yaml and commits it
+# back to GitHub.
+#
+# We ignore changes to values-dev.yaml so that the automated
+# GitOps commit does not start another CI build.
+# ============================================================
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'helm/cicd-demo/values-dev.yaml'
+
+  workflow_dispatch:
+
+
+# ============================================================
+# PERMISSIONS
+# ============================================================
+# contents: write
+#   Allows GitHub Actions to update values-dev.yaml and push
+#   that change back to this repository.
+#
+# id-token: write
+#   Allows GitHub Actions to authenticate with AWS using OIDC.
+# ============================================================
+
+permissions:
+  contents: write
+  id-token: write
+
+
+# ============================================================
+# COMMON ENVIRONMENT VARIABLES
+# ============================================================
+
+env:
+  AWS_REGION: ap-south-1
+  ECR_REPOSITORY: attripratham/cicd-demo
+  AWS_ACCOUNT_ID: "711457211649"
+
+jobs:
+
+  build-test-publish:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # ======================================================
+      # STEP 1 - CHECKOUT SOURCE CODE
+      # ======================================================
+
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+
+      # ======================================================
+      # STEP 2 - INSTALL JAVA
+      # ======================================================
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+
+      # ======================================================
+      # STEP 3 - BUILD AND TEST
+      # ======================================================
+      #
+      # Maven:
+      #
+      # 1. Cleans previous build files
+      # 2. Compiles the application
+      # 3. Runs automated tests
+      # 4. Creates the application JAR
+      #
+      # If tests fail, the workflow stops here.
+      # ======================================================
+
+      - name: Build and test application
+        run: mvn clean verify
+
+
+      # ======================================================
+      # STEP 4 - CREATE UNIQUE IMAGE TAG
+      # ======================================================
+      #
+      # github.sha contains the Git commit SHA.
+      #
+      # Example:
+      #
+      # 7ac91fe5d9216c87af3c2b01b8a8e31c6c123456
+      #
+      # For readability we use the first 7 characters:
+      #
+      # 7ac91fe
+      #
+      # This gives every source-code commit its own Docker
+      # image version.
+      #
+      # The value is stored in GITHUB_ENV so all following
+      # steps can use $IMAGE_TAG.
+      # ======================================================
+
+      - name: Create unique Docker image tag
+        run: |
+          IMAGE_TAG="${GITHUB_SHA::7}"
+
+          echo "IMAGE_TAG=$IMAGE_TAG" >> "$GITHUB_ENV"
+
+          echo "Docker image tag: $IMAGE_TAG"
+
+
+      # ======================================================
+      # STEP 5 - CONNECT GITHUB ACTIONS TO AWS
+      # ======================================================
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/GithubActionECRAccess
+          aws-region: ${{ env.AWS_REGION }}
+
+
+      # ======================================================
+      # STEP 6 - LOGIN TO AMAZON ECR
+      # ======================================================
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+
+      # ======================================================
+      # STEP 7 - BUILD DOCKER IMAGE
+      # ======================================================
+      #
+      # Example resulting image:
+      #
+      # 123456789012.dkr.ecr.eu-north-1.amazonaws.com/
+      # testbook-api:7ac91fe
+      #
+      # ======================================================
+
+      - name: Build Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+
+        run: |
+          echo "Building Docker image..."
+          echo "Image tag: $IMAGE_TAG"
+
+          docker build \
+            -t "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" \
+            .
+
+
+      # ======================================================
+      # STEP 8 - PUSH DOCKER IMAGE TO AMAZON ECR
+      # ======================================================
+
+      - name: Push Docker image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+
+        run: |
+          echo "Pushing Docker image to ECR..."
+
+          docker push \
+            "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+          echo ""
+          echo "Docker image successfully pushed:"
+          echo "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+
+      # ======================================================
+      # STEP 9 - UPDATE values-dev.yaml
+      # ======================================================
+      #
+      # Before:
+      #
+      # image:
+      #   tag: "latest"
+      #
+      # After:
+      #
+      # image:
+      #   tag: "7ac91fe"
+      #
+      # We are NOT deploying anything here.
+      #
+      # We are changing Git to say:
+      #
+      # "DEV should run Docker image 7ac91fe."
+      #
+      # Argo CD will detect this Git change.
+      # ======================================================
+
+      - name: Update Docker image tag in values-dev.yaml
+        run: |
+          echo "Updating values-dev.yaml..."
+
+          sed -i \
+            "s|^[[:space:]]*tag:.*|  tag: \"$IMAGE_TAG\"|" \
+            helm/cicd-demo/values-dev.yaml
+
+          echo ""
+          echo "Updated values-dev.yaml:"
+          cat helm/cicd-demo/values-dev.yaml
+
+
+      # ======================================================
+      # STEP 10 - COMMIT THE NEW IMAGE TAG TO GITHUB
+      # ======================================================
+      #
+      # This Git commit is what Argo CD detects.
+      #
+      # GitHub Actions does NOT run:
+      #
+      # helm upgrade
+      #
+      # or:
+      #
+      # kubectl apply
+      #
+      # Argo CD handles the Kubernetes deployment.
+      # ======================================================
+
+      - name: Commit updated image tag
+        run: |
+
+          git config user.name "github-actions[bot]"
+
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add helm/cicd-demo/values-dev.yaml
+
+          if git diff --cached --quiet; then
+
+            echo "No Helm values change to commit."
+
+          else
+
+            git commit \
+              -m "Update DEV image to $IMAGE_TAG [skip ci]"
+
+            git push
+
+          fi
+
+
+      # ======================================================
+      # STEP 11 - FINAL BUILD INFORMATION
+      # ======================================================
+
+      - name: Display deployment information
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+
+        run: |
+          echo "=============================================="
+          echo " CI BUILD COMPLETED"
+          echo "=============================================="
+          echo ""
+          echo "Git commit : $GITHUB_SHA"
+          echo "Image tag  : $IMAGE_TAG"
+          echo "Docker image:"
+          echo "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          echo ""
+          echo "values-dev.yaml has been updated."
+          echo "Argo CD will detect the Git change."
+          echo "=============================================="
